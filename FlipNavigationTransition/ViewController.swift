@@ -18,10 +18,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         // Do any additional setup after loading the view, typically from a nib.        
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         self.navigationController!.delegate = self
         
-        panGesture = UIPanGestureRecognizer(target: self, action: Selector("panHandler:"))
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(ViewController.panHandler(_:)))
         self.view.addGestureRecognizer(panGesture!)
     }
     
@@ -32,39 +32,39 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
     
     // MARK: - UINavigationControllerDelegate
     
-    func navigationController(navigationController: UINavigationController, animationControllerForOperation operation: UINavigationControllerOperation, fromViewController fromVC: UIViewController, toViewController toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+    func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationControllerOperation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
         
-        if operation == UINavigationControllerOperation.Push {
+        if operation == UINavigationControllerOperation.push {
             return FlipPushTransitioningAnimator()
         }
         
-        if operation == UINavigationControllerOperation.Pop {
+        if operation == UINavigationControllerOperation.pop {
             return FlipPopTransitioningAnimator()
         }
         
         return nil
     }
     
-    func navigationController(navigationController: UINavigationController, interactionControllerForAnimationController animationController: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
+    func navigationController(_ navigationController: UINavigationController, interactionControllerFor animationController: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
         return self.interactionController
     }
     
     // MARK: - Gesture recognizer
     
-    func panHandler(gestureRecognizer:UIPanGestureRecognizer) {
+    func panHandler(_ gestureRecognizer:UIPanGestureRecognizer) {
         switch gestureRecognizer.state {
-        case .Began:
+        case .began:
             self.interactionController = UIPercentDrivenInteractiveTransition()
             
             // direction < 0 -> UP
             // direction > 0 -> DOWN
-            let direction = gestureRecognizer.velocityInView(self.view).y
+            let direction = gestureRecognizer.velocity(in: self.view).y
             
-            if gestureRecognizer.locationInView(self.view).y > self.view.bounds.height/2 && direction < 0 {
+            if gestureRecognizer.location(in: self.view).y > self.view.bounds.height/2 && direction < 0 {
                 // If the touch begin in the lower side of the screen and the direction is to the top,
                 // I'll move to the next
                 moveToNext()
-            } else if gestureRecognizer.locationInView(self.view).y < self.view.bounds.height/2 && direction > 0 {
+            } else if gestureRecognizer.location(in: self.view).y < self.view.bounds.height/2 && direction > 0 {
                 // If the touch begin in the upper side of the screen and the direction is to the bottom,
                 // I'll move to the prev
                 moveToPrev()
@@ -73,41 +73,41 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
                 // screen and the direction is to the top
             }
             
-        case .Changed:
-            let translation = gestureRecognizer.translationInView(self.view)
-            let completionProgress = abs(translation.y/CGRectGetHeight(self.view.bounds))
-            self.interactionController!.updateInteractiveTransition(completionProgress)
+        case .changed:
+            let translation = gestureRecognizer.translation(in: self.view)
+            let completionProgress = abs(translation.y/self.view.bounds.height)
+            self.interactionController!.update(completionProgress)
             
-        case .Ended:
-            let translation = gestureRecognizer.translationInView(self.view)
-            let completionProgress = abs(translation.y/CGRectGetHeight(self.view.bounds))
-            let speed = abs(gestureRecognizer.velocityInView(self.view).y)
+        case .ended:
+            let translation = gestureRecognizer.translation(in: self.view)
+            let completionProgress = abs(translation.y/self.view.bounds.height)
+            let speed = abs(gestureRecognizer.velocity(in: self.view).y)
             
             if completionProgress >= 0.3 || speed >= 400.0 {
-                self.interactionController!.finishInteractiveTransition()
+                self.interactionController!.finish()
             } else {
-                self.interactionController!.cancelInteractiveTransition()
+                self.interactionController!.cancel()
             }
             
             self.interactionController = nil
             
         default:
-            self.interactionController?.cancelInteractiveTransition()
+            self.interactionController?.cancel()
             self.interactionController = nil
         }
     }
     
     func moveToNext() {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let destination = storyboard.instantiateViewControllerWithIdentifier("ViewController") as! ViewController
+        let destination = storyboard.instantiateViewController(withIdentifier: "ViewController") as! ViewController
         self.navigationController!.pushViewController(destination, animated: true)
     }
     
     func moveToPrev() {
-        self.navigationController!.popViewControllerAnimated(true)
+        self.navigationController!.popViewController(animated: true)
     }
     
-    @IBAction func nextButtonDidTap(sender: AnyObject) {
+    @IBAction func nextButtonDidTap(_ sender: AnyObject) {
         moveToNext()
     }
     

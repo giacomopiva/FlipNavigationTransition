@@ -12,12 +12,12 @@ class FlipPopTransitioningAnimator: NSObject, UIViewControllerAnimatedTransition
     
     // MARK: UIViewControllerAnimatedTransitioning
     
-    func animateTransition(transitionContext: UIViewControllerContextTransitioning) {
+    func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
     
-        let containerView   = transitionContext.containerView()!
-        let toView          = transitionContext.viewControllerForKey(UITransitionContextToViewControllerKey)?.view
-        let fromView        = transitionContext.viewControllerForKey(UITransitionContextFromViewControllerKey)?.view
-        let duration        = transitionDuration(transitionContext)
+        let containerView   = transitionContext.containerView
+        let toView          = transitionContext.viewController(forKey: UITransitionContextViewControllerKey.to)?.view
+        let fromView        = transitionContext.viewController(forKey: UITransitionContextViewControllerKey.from)?.view
+        let duration        = transitionDuration(using: transitionContext)
         
         // Getting Screenshots
         let toViewSnapshot = createSnapshots(toView!, afterUpdate: true)
@@ -35,9 +35,9 @@ class FlipPopTransitioningAnimator: NSObject, UIViewControllerAnimatedTransition
         transform.m34 = -0.002
         containerView.layer.sublayerTransform = transform
         
-        updateAnchorPointAndOffset(CGPointMake(0.5, 0.0), view: flippedSectionOfToView)
-        updateAnchorPointAndOffset(CGPointMake(0.5, 1.0), view: flippedSectionOfFromView)
-        updateAnchorPointAndOffset(CGPointMake(0.5, 0.0), view: toViewBottomShadowLayer)
+        updateAnchorPointAndOffset(CGPoint(x: 0.5, y: 0.0), view: flippedSectionOfToView)
+        updateAnchorPointAndOffset(CGPoint(x: 0.5, y: 1.0), view: flippedSectionOfFromView)
+        updateAnchorPointAndOffset(CGPoint(x: 0.5, y: 0.0), view: toViewBottomShadowLayer)
         
         let animationView = UIView(frame: containerView.frame)
         animationView.addSubview(toView!)
@@ -61,23 +61,23 @@ class FlipPopTransitioningAnimator: NSObject, UIViewControllerAnimatedTransition
         // Configuring shadows
         toViewTopShadowLayer.backgroundColor        = UIColor(red: 0, green: 0, blue: 0, alpha: 0.5)
         toViewBottomShadowLayer.backgroundColor     = UIColor(red: 0, green: 0, blue: 0, alpha: 0.3)
-        fromViewBottomShadowLayer.backgroundColor   = UIColor.blackColor()
+        fromViewBottomShadowLayer.backgroundColor   = UIColor.black
         fromViewBottomShadowLayer.alpha = 0.0
         
-        UIView.animateKeyframesWithDuration(duration, delay: 0, options: UIViewKeyframeAnimationOptions.LayoutSubviews, animations: {
+        UIView.animateKeyframes(withDuration: duration, delay: 0, options: UIViewKeyframeAnimationOptions.layoutSubviews, animations: {
             
-            UIView.addKeyframeWithRelativeStartTime(0.0, relativeDuration: duration/2, animations: {
+            UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: duration/2, animations: {
                 flippedSectionOfFromView.layer.transform = CATransform3DMakeRotation(CGFloat(-M_PI_2), 1.0, 0.0, 0.0)
                 toViewTopShadowLayer.alpha = 0.0
             })
                 
-            UIView.addKeyframeWithRelativeStartTime(duration/2, relativeDuration: 0.0001, animations: {
+            UIView.addKeyframe(withRelativeStartTime: duration/2, relativeDuration: 0.0001, animations: {
                 flippedSectionOfToView.alpha = 1
                 flippedSectionOfToView.layer.zPosition = 5
                 toViewBottomShadowLayer.layer.zPosition = 5
             })
                 
-            UIView.addKeyframeWithRelativeStartTime((duration/2)+0.0001, relativeDuration: (duration/2)-0.0001, animations: {
+            UIView.addKeyframe(withRelativeStartTime: (duration/2)+0.0001, relativeDuration: (duration/2)-0.0001, animations: {
                 flippedSectionOfToView.layer.transform =  CATransform3DRotate(trans,CGFloat((-M_PI_2/180)), 1, 0, 0)
                 toViewBottomShadowLayer.layer.transform = CATransform3DRotate(trans,CGFloat((-M_PI_2/180)), 1, 0, 0)
                 toViewBottomShadowLayer.alpha = 0.0
@@ -86,7 +86,7 @@ class FlipPopTransitioningAnimator: NSObject, UIViewControllerAnimatedTransition
             })
 
             }, completion: { finished in
-                if transitionContext.transitionWasCancelled() {
+                if transitionContext.transitionWasCancelled {
                     transitionContext.completeTransition(false)
                 } else {
                     transitionContext.completeTransition(true)
@@ -96,29 +96,29 @@ class FlipPopTransitioningAnimator: NSObject, UIViewControllerAnimatedTransition
         })
     }
     
-    func createSnapshots(view:UIView, afterUpdate:Bool) -> Array<UIView> {
-        var snapshotRegion = CGRectZero
+    func createSnapshots(_ view:UIView, afterUpdate:Bool) -> Array<UIView> {
+        var snapshotRegion = CGRect.zero
 
         // Snapshot DOWN
-        snapshotRegion = CGRectMake(0, view.frame.size.height/2 , view.frame.size.width, view.frame.size.height/2);
-        let downHandView = view.resizableSnapshotViewFromRect(snapshotRegion, afterScreenUpdates: afterUpdate, withCapInsets: UIEdgeInsetsZero)
-        downHandView.frame = snapshotRegion
+        snapshotRegion = CGRect(x: 0, y: view.frame.size.height/2 , width: view.frame.size.width, height: view.frame.size.height/2);
+        let downHandView = view.resizableSnapshotView(from: snapshotRegion, afterScreenUpdates: afterUpdate, withCapInsets: UIEdgeInsets.zero)
+        downHandView?.frame = snapshotRegion
         
         // Snapshot  UP
-        let upSnapshotRegion = CGRectMake(0, 64, view.frame.size.width, view.frame.size.height/2 - 64)
-        let upHandView = view.resizableSnapshotViewFromRect(upSnapshotRegion, afterScreenUpdates: afterUpdate, withCapInsets: UIEdgeInsetsZero)
-        upHandView.frame = upSnapshotRegion
+        let upSnapshotRegion = CGRect(x: 0, y: 64, width: view.frame.size.width, height: view.frame.size.height/2 - 64)
+        let upHandView = view.resizableSnapshotView(from: upSnapshotRegion, afterScreenUpdates: afterUpdate, withCapInsets: UIEdgeInsets.zero)
+        upHandView?.frame = upSnapshotRegion
         
-        return[downHandView, upHandView]
+        return[downHandView!, upHandView!]
     }
     
-    func updateAnchorPointAndOffset(anchorPoint:CGPoint, view:UIView) {
+    func updateAnchorPointAndOffset(_ anchorPoint:CGPoint, view:UIView) {
         view.layer.anchorPoint = anchorPoint
         let yOffset = anchorPoint.y  - 0.5
-        view.frame = CGRectOffset(view.frame, 0, yOffset * view.frame.size.height)
+        view.frame = view.frame.offsetBy(dx: 0, dy: yOffset * view.frame.size.height)
     }
     
-    func transitionDuration(transitionContext: UIViewControllerContextTransitioning?) -> NSTimeInterval {
+    func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
         return 0.8
     }
 }
